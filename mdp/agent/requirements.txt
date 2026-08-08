@@ -1,0 +1,4 @@
+httpx
+websockets
+psutil
+python-dotenv
