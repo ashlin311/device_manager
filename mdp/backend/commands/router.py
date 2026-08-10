@@ -107,6 +107,17 @@ async def report_result(
     command.status = request.status
     command.result = request.result
     command.completed_at = datetime.now(timezone.utc)
+    
+    result = await db.execute(select(Device).where(Device.id == command.device_id))
+    device = result.scalar_one_or_none()
+
+    if device and request.status == "completed":
+        if command.action == "rename":
+            new_name = command.payload.get("new_name")
+            if new_name:
+                device.name = new_name
+                await db.flush()
+
 
     # Audit log
     audit = AuditLog(

@@ -24,6 +24,25 @@ async def register_device(
     db: AsyncSession = Depends(get_db),
 ):
     """Agent calls this on startup to register itself."""
+    result = await db.execute(
+        select(Device).where(Device.hostname == request.hostname,Device.ip_address == request.ip_address)
+    )
+    device = result.scalar_one_or_none()
+    if device:
+        device.name = request.name
+        device.os = request.os
+        device.cpu_usage = request.cpu_usage
+        device.ram_usage = request.ram_usage
+        device.ram_total_gb = request.ram_total_gb
+        device.cpu_cores = request.cpu_cores
+        device.ip_address = request.ip_address
+        device.status = "online"
+        device.last_seen = datetime.now(timezone.utc)
+
+        await db.flush()
+        await db.refresh(device)
+
+        return DeviceRegisterResponse(device_id=device.id)
     device = Device(
         name=request.name,
         hostname=request.hostname,

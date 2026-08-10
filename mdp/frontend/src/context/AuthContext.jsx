@@ -5,7 +5,9 @@ const AuthContext = createContext(null);
 export const API_BASE = 'http://localhost:8000';
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(null);
+  const [token, setToken] = useState(
+    () => localStorage.getItem("token")
+  );
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -28,11 +30,14 @@ export function AuthProvider({ children }) {
           const userData = await res.json();
           setUser(userData);
         } else {
-          // Token expired or invalid
+          localStorage.removeItem("token");
           setToken(null);
           setUser(null);
         }
       } catch (err) {
+        localStorage.removeItem("token");
+        setToken(null);
+        setUser(null);
         console.error('Error fetching user profile:', err);
       } finally {
         setLoading(false);
@@ -63,6 +68,7 @@ export function AuthProvider({ children }) {
     }
 
     const data = await res.json();
+    localStorage.setItem("token", data.access_token);
     setToken(data.access_token);
   };
 
@@ -85,6 +91,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
+    localStorage.removeItem("token");
     setToken(null);
     setUser(null);
   };
